@@ -12,8 +12,7 @@ provider "aws" {
 }
 
 module "lemnispace_api" {
-  source         = "./modules/api"
-  api_stage_name = var.stage_name
+  source = "./modules/api"
 }
 
 module "lemnispace_api_stage_deployment" {
