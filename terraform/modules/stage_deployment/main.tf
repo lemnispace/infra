@@ -8,12 +8,16 @@ resource "aws_apigatewayv2_stage" "lemnispace_services_stage" {
   stage_variables = {
     "stage" = var.api_stage_name
   }
+  deployment_id = aws_apigatewayv2_deployment.lemnispace_services_deployment.id
 }
 
 resource "aws_apigatewayv2_deployment" "lemnispace_services_deployment" {
   api_id      = var.api_id
   description = "Deployment for Lemnispace Services API"
-  depends_on  = [aws_apigatewayv2_stage.lemnispace_services_stage]
+
+  triggers = {
+    redeployment = sha1(join(",", var.route_hashes))
+  }
 
   lifecycle {
     create_before_destroy = true

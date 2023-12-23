@@ -19,6 +19,7 @@ module "lemnispace_api_stage_deployment" {
   source         = "./modules/stage_deployment"
   api_id         = module.lemnispace_api.api_id
   api_stage_name = var.stage_name
+  route_hashes   = var.route_hashes
 }
 
 module "lemnispace_roles" {

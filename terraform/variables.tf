@@ -17,3 +17,9 @@ variable "lambda_arn" {
   type        = string
   description = "ARN of the Lambda function to be invoked by the API Gateway"
 }
+
+variable "route_hashes" {
+  type        = list(string)
+  description = "The hashes of the routes resources associated with the api" # this is used to trigger a redeployment
+  default     = []
+}
