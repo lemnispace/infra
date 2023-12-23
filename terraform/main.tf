@@ -22,11 +22,15 @@ module "lemnispace_api" {
   source = "./modules/api"
 }
 
-module "lemnispace_api_stage_deployment" {
-  source         = "./modules/stage_deployment"
+module "lemnispace_api_dev_stage" {
+  source         = "./modules/stage"
   api_id         = module.lemnispace_api.api_id
-  api_stage_name = var.stage_name
-  route_hashes   = var.route_hashes
+  api_stage_name = "Dev"
+}
+module "lemnispace_api_prod_stage" {
+  source         = "./modules/stage"
+  api_id         = module.lemnispace_api.api_id
+  api_stage_name = "Prod"
 }
 
 module "lemnispace_roles" {

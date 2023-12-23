@@ -8,17 +8,21 @@ output "api_id" {
   value = module.lemnispace_api.api_id
 }
 
-output "api_stage_name" {
-  value = module.lemnispace_api_stage_deployment.stage_name
-}
-
 # API Gateway Stage Deployment outputs
-output "api_stage_id" {
-  value = module.lemnispace_api_stage_deployment.stage_id
+output "dev_stage_id" {
+  value = module.lemnispace_api_dev_stage.stage_id
 }
 
-output "api_deployment_id" {
-  value = module.lemnispace_api_stage_deployment.deployment_id
+output "dev_stage_name" {
+  value = module.lemnispace_api_dev_stage.stage_name
+}
+
+output "prod_stage_id" {
+  value = module.lemnispace_api_prod_stage.stage_id
+}
+
+output "prod_stage_name" {
+  value = module.lemnispace_api_prod_stage.stage_name
 }
 
 # IAM Role outputs
