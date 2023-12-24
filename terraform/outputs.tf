@@ -8,6 +8,10 @@ output "api_id" {
   value = module.lemnispace_api.api_id
 }
 
+output "api_execution_arn" {
+  value = module.lemnispace_api.api_execution_arn
+}
+
 # API Gateway Stage Deployment outputs
 output "dev_stage_id" {
   value = module.lemnispace_api_dev_stage.stage_id
