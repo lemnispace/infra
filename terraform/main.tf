@@ -28,14 +28,27 @@ data "terraform_remote_state" "lemnispace_mosaic_service" {
   }
 }
 
+data "terraform_remote_state" "lemnispace_ai_service" {
+  backend = "s3"
+  config = {
+    bucket         = "lemnispace-terraform-state"
+    key            = "ai-service/terraform.tfstate"
+    region         = "us-east-1"
+    dynamodb_table = "terraform-state-lock"
+  }
+}
+
 module "lemnispace_api" {
   source = "./modules/api"
 }
 
 module "lemnispace_dev_deployment" {
-  source       = "./modules/deployment"
-  api_id       = module.lemnispace_api.api_id
-  route_hashes = [data.terraform_remote_state.lemnispace_mosaic_service.outputs.mosaic_route_hash]
+  source = "./modules/deployment"
+  api_id = module.lemnispace_api.api_id
+  route_hashes = [
+    data.terraform_remote_state.lemnispace_mosaic_service.outputs.mosaic_route_hash,
+    data.terraform_remote_state.lemnispace_ai_service.outputs.ai_service_route_hash
+  ]
 }
 
 module "lemnispace_api_dev_stage" {
