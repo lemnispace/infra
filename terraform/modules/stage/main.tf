@@ -5,6 +5,6 @@ resource "aws_apigatewayv2_stage" "lemnispace_services_stage" {
   auto_deploy   = var.auto_deploy
   deployment_id = var.deployment_id
   stage_variables = {
-    "stage" = var.api_stage_name
+    "Stage" = var.api_stage_name
   }
 }
