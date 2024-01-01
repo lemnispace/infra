@@ -25,6 +25,7 @@
         "editor.tabSize": 2
       },
       "extensions": [
+        "golang.go",
         "hashicorp.terraform",
         "usernamehw.errorlens",
         "dbaeumer.vscode-eslint",
@@ -37,7 +38,8 @@
         "Postman.postman-for-vscode",
         "esbenp.prettier-vscode",
         "ms-azuretools.vscode-docker",
-        "redhat.vscode-yaml"
+        "redhat.vscode-yaml",
+        "ms-vscode.makefile-tools"
       ]
     }
   }
