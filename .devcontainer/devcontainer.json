@@ -1,9 +1,9 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
-// README at: https://github.com/devcontainers/templates/tree/main/src/javascript-node
+// README at: https://github.com/devcontainers/templates/tree/main/src/go
 {
-  "name": "Node.js",
+  "name": "Go",
   // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-20-bullseye",
+  "image": "mcr.microsoft.com/devcontainers/go:1-1.21-bullseye",
   "features": {
     "ghcr.io/devcontainers/features/aws-cli:1": {},
     "ghcr.io/devcontainers/features/docker-in-docker:2": {},
@@ -14,7 +14,7 @@
   // "forwardPorts": [],
 
   // Use 'postCreateCommand' to run commands after the container is created.
-  // "postCreateCommand": "yarn install",
+  // "postCreateCommand": "go version",
 
   // Configure tool-specific properties.
   "customizations": {
