@@ -54,3 +54,7 @@ output "webhook_deploy_lambda_arn" {
 output "webhook_deploy_lambda_invoke_arn" {
   value = module.lemnispace_infra_lambda.webhook_invoke_arn
 }
+
+output "webhook_deploy_lambda_invoke_url" {
+  value = module.lemnispace_infra_lambda.webhook_invoke_url
+}

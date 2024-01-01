@@ -24,3 +24,9 @@ resource "aws_lambda_function" "WebhookFunction" {
   timeout          = 30
   memory_size      = 512
 }
+
+resource "aws_lambda_function_url" "WebhookFunction_url" {
+  function_name      = aws_lambda_function.WebhookFunction.function_name
+  authorization_type = "NONE"
+  depends_on         = [aws_lambda_function.WebhookFunction]
+}
