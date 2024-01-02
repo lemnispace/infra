@@ -1,7 +1,7 @@
 ### Webhook Deployment Lambda Function ###
 data "archive_file" "WebhookFunction" {
   type        = "zip"
-  source_dir  = "${path.root}/../build/deploy/bootstrap"
+  source_file = "${path.root}/../build/deploy/bootstrap"
   output_path = "${path.root}/../build/deploy/WebhookFunction.zip"
 }
 
