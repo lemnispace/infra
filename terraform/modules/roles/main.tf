@@ -44,12 +44,12 @@ resource "aws_iam_policy" "lambda_ssm_access_policy" {
   policy = data.aws_iam_policy_document.ssm_parameter_access.json
 }
 
-resource "aws_iam_role" "webhook_lambda_role" {
-  name               = "webhook_lambda_role"
+resource "aws_iam_role" "lemnispace_services_webhook_lambda_role" {
+  name               = "lemnispace_services_webhook_lambda_role"
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
 }
 
 resource "aws_iam_role_policy_attachment" "ssm_policy_attachment" {
-  role       = aws_iam_role.webhook_lambda_role.name
+  role       = aws_iam_role.lemnispace_services_webhook_lambda_role.name
   policy_arn = aws_iam_policy.lambda_ssm_access_policy.arn
 }
