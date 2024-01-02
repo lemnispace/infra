@@ -36,9 +36,18 @@ type Headers struct {
 }
 
 type WebhookEvent struct {
-	Zen    string `json:"zen"`
-	HookID int    `json:"hook_id"`
-	Hook   Hook   `json:"hook"`
+	Zen        string     `json:"zen"`
+	HookID     int        `json:"hook_id"`
+	Hook       Hook       `json:"hook"`
+	Repository Repository `json:"repository"`
+}
+
+type Repository struct {
+	ID       int    `json:"id"`
+	NodeID   string `json:"node_id"`
+	Name     string `json:"name"`
+	FullName string `json:"full_name"`
+	Private  bool   `json:"private"`
 }
 
 type Hook struct {
@@ -141,6 +150,9 @@ func HandleRequest(ctx context.Context, event LambdaEvent) (string, error) {
 	if err != nil || wh == nil {
 		log.Print(err)
 		return "", fmt.Errorf("invalid payload")
+	}
+	if wh.Hook.Events[0] == "deployment" {
+		log.Printf("Deployment webhook received from %s", wh.Repository.FullName)
 	}
 	return "success", nil
 }
