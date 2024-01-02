@@ -18,6 +18,8 @@ provider "aws" {
   region = var.aws_region
 }
 
+data "aws_caller_identity" "current" {}
+
 data "terraform_remote_state" "lemnispace_mosaic_service" {
   backend = "s3"
   config = {
@@ -64,7 +66,9 @@ module "lemnispace_api_prod_stage" {
 }
 
 module "lemnispace_roles" {
-  source = "./modules/roles"
+  source         = "./modules/roles"
+  aws_region     = var.aws_region
+  aws_account_id = data.aws_caller_identity.current.account_id
 }
 
 module "lemnispace_services_s3" {

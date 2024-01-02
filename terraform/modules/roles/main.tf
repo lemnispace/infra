@@ -34,7 +34,7 @@ data "aws_iam_policy_document" "ssm_parameter_access" {
     ]
 
     resources = [
-      "arn:aws:ssm:<REGION>:<ACCOUNT_ID>:parameter/*"
+      "arn:aws:ssm:${var.aws_region}:${var.aws_account_id}:parameter/*"
     ]
   }
 }
