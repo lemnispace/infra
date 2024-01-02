@@ -33,6 +33,9 @@ jobs:
       - name: Terraform CLI setup
         uses: hashicorp/setup-terraform@v3
 
+      - name: Test Go code
+        run: make test
+
       - name: Build and package
         run: |
           make build-deploy
