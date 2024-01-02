@@ -53,6 +53,7 @@ jobs:
         run: terraform -chdir="./terraform" plan -no-color
 
       - name: Deploy
+        if: github.event_name == 'push'
         id: deploy
         run: |
           terraform -chdir="./terraform" apply -auto-approve
