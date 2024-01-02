@@ -2,7 +2,7 @@
 data "archive_file" "WebhookFunction" {
   type        = "zip"
   source_dir  = "${path.root}/../build/deploy/bootstrap"
-  output_path = "${path.root}/build/deploy/WebhookFunction.zip"
+  output_path = "${path.root}/../build/deploy/WebhookFunction.zip"
 }
 
 resource "aws_s3_object" "webhook_deploy" {
