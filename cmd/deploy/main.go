@@ -5,6 +5,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
@@ -14,8 +15,8 @@ import (
 
 // LambdaEvent represents the structure of your Lambda event
 type LambdaEvent struct {
-	Body           []byte            `json:"body"`
-	Headers        Headers           `json:"headers"`
+	Body    []byte  `json:"body"`
+	Headers Headers `json:"headers"`
 }
 
 // Headers represents the specific structure of your headers
@@ -34,25 +35,25 @@ type Headers struct {
 }
 
 type WebhookEvent struct {
-	Zen         string `json:"zen"`
-	HookID      int    `json:"hook_id"`
-	Hook        Hook   `json:"hook"`
+	Zen    string `json:"zen"`
+	HookID int    `json:"hook_id"`
+	Hook   Hook   `json:"hook"`
 }
 
 type Hook struct {
-	Type        string       `json:"type"`
-	ID          int          `json:"id"`
-	Name        string       `json:"name"`
-	Active      bool         `json:"active"`
-	Events      []string     `json:"events"`
-	Config      HookConfig   `json:"config"`
-	UpdatedAt   string       `json:"updated_at"`
-	CreatedAt   string       `json:"created_at"`
-	URL         string       `json:"url"`
-	TestURL     string       `json:"test_url"`
-	PingURL     string       `json:"ping_url"`
-	DeliveriesURL string     `json:"deliveries_url"`
-	LastResponse LastResponse `json:"last_response"`
+	Type          string       `json:"type"`
+	ID            int          `json:"id"`
+	Name          string       `json:"name"`
+	Active        bool         `json:"active"`
+	Events        []string     `json:"events"`
+	Config        HookConfig   `json:"config"`
+	UpdatedAt     string       `json:"updated_at"`
+	CreatedAt     string       `json:"created_at"`
+	URL           string       `json:"url"`
+	TestURL       string       `json:"test_url"`
+	PingURL       string       `json:"ping_url"`
+	DeliveriesURL string       `json:"deliveries_url"`
+	LastResponse  LastResponse `json:"last_response"`
 }
 
 type HookConfig struct {
@@ -91,11 +92,11 @@ func HandleRequest(ctx context.Context, event LambdaEvent) (string, error) {
 	if err != nil {
 		log.Println(err)
 		return "", fmt.Errorf(errMsg)
- }
+	}
 	secret, err := ssmsvc.Param("/Any/infra/webhook-secret", true).GetValue(ctx)
 	if err != nil {
-		 log.Println(err)
-		 return "", fmt.Errorf(errMsg)
+		log.Println(err)
+		return "", fmt.Errorf(errMsg)
 	}
 	valid, err := verifySignature(event, secret)
 	if err != nil {
@@ -105,6 +106,9 @@ func HandleRequest(ctx context.Context, event LambdaEvent) (string, error) {
 	if !valid {
 		return "", fmt.Errorf("invalid signature")
 	}
+	var eventBody WebhookEvent
+	json.Unmarshal(event.Body, &eventBody)
+	log.Printf("Received Webhook Type: %s", eventBody.Hook.Type)
 	return "success", nil
 }
 
