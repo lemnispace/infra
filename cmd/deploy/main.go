@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -13,13 +14,12 @@ import (
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
-// LambdaEvent represents the structure of your Lambda event
 type LambdaEvent struct {
-	Body    []byte  `json:"body"`
-	Headers Headers `json:"headers"`
+	Body            string  `json:"body"`
+	Headers         Headers `json:"headers"`
+	IsBase64Encoded bool    `json:"isBase64Encoded"`
 }
 
-// Headers represents the specific structure of your headers
 type Headers struct {
 	Accept                    string `json:"accept"`
 	AcceptEncoding            string `json:"accept-encoding"`
@@ -69,14 +69,26 @@ type LastResponse struct {
 	Message interface{} `json:"message"`
 }
 
-func verifySignature(event LambdaEvent, secret string) (bool, error) {
-	expectedMAC := calculateHash(secret, event.Body)
-	receivedMAC, err := hex.DecodeString(strings.TrimPrefix(event.Headers.XHubSignature256, "sha256="))
+func getPayload(event LambdaEvent) ([]byte, error) {
+	if event.IsBase64Encoded {
+		var err error
+		payload, err := base64.StdEncoding.DecodeString(event.Body)
+		if err != nil {
+			log.Println(err)
+			return nil, fmt.Errorf("error decoding base64 payload: %s", err)
+		}
+		return payload, nil
+	}
+	return []byte(event.Body), nil
+}
+
+func verifySignature(sig string, payload []byte, secret string) (bool, error) {
+	expectedMAC := calculateHash(secret, payload)
+	receivedMAC, err := hex.DecodeString(strings.TrimPrefix(sig, "sha256="))
 	if err != nil {
 		log.Println(err)
 		return false, fmt.Errorf("error decoding received signature: %s", err)
 	}
-
 	return hmac.Equal(expectedMAC, receivedMAC), nil
 }
 
@@ -86,7 +98,7 @@ func calculateHash(secret string, payload []byte) []byte {
 	return signature.Sum(nil)
 }
 
-func HandleRequest(ctx context.Context, event LambdaEvent) (string, error) {
+func getSecret(ctx context.Context) (string, error) {
 	errMsg := "Error retrieving secret for webhook validation"
 	ssmsvc, err := NewSSMClient(ctx)
 	if err != nil {
@@ -98,7 +110,20 @@ func HandleRequest(ctx context.Context, event LambdaEvent) (string, error) {
 		log.Println(err)
 		return "", fmt.Errorf(errMsg)
 	}
-	valid, err := verifySignature(event, secret)
+	return secret, nil
+}
+
+func HandleRequest(ctx context.Context, event LambdaEvent) (string, error) {
+	secret, err := getSecret(ctx)
+	if err != nil {
+		return "", err
+	}
+	payload, err := getPayload(event)
+	if err != nil {
+		log.Println(err)
+		return "", fmt.Errorf("error processing payload")
+	}
+	valid, err := verifySignature(event.Headers.XHubSignature256, payload, secret)
 	if err != nil {
 		log.Println(err)
 		return "", fmt.Errorf("error verifying signature: %s", err)
@@ -107,12 +132,11 @@ func HandleRequest(ctx context.Context, event LambdaEvent) (string, error) {
 		return "", fmt.Errorf("invalid signature")
 	}
 	var eventBody WebhookEvent
-	json.Unmarshal(event.Body, &eventBody)
-	log.Printf("Received Body: %s", event.Body)
-	log.Printf("Received Webhook Zen: %s", eventBody.Zen)
-	log.Printf("Received Webhook Name: %s", eventBody.Hook.Name)
-	log.Printf("Received Webhook Name: %s", eventBody.Hook.CreatedAt)
-	log.Printf("Received Webhook Type: %s", eventBody.Hook.Type)
+	json.Unmarshal(payload, &eventBody)
+	if eventBody.Zen != "Responsive is better than fast." {
+		log.Print(eventBody)
+		return "", fmt.Errorf("invalid payload")
+	}
 	return "success", nil
 }
 
