@@ -70,3 +70,9 @@ module "lemnispace_roles" {
 module "lemnispace_services_s3" {
   source = "./modules/s3"
 }
+
+module "lemnispace_infra_lambda" {
+  source                  = "./modules/lambda"
+  services_s3_bucket_id   = module.lemnispace_services_s3.bucket_id
+  execute_lambda_role_arn = module.lemnispace_roles.execute_lambda_arn
+}
