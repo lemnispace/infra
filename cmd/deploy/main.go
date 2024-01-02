@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/url"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/lambda"
@@ -41,19 +42,18 @@ type WebhookEvent struct {
 }
 
 type Hook struct {
-	Type          string       `json:"type"`
-	ID            int          `json:"id"`
-	Name          string       `json:"name"`
-	Active        bool         `json:"active"`
-	Events        []string     `json:"events"`
-	Config        HookConfig   `json:"config"`
-	UpdatedAt     string       `json:"updated_at"`
-	CreatedAt     string       `json:"created_at"`
-	URL           string       `json:"url"`
-	TestURL       string       `json:"test_url"`
-	PingURL       string       `json:"ping_url"`
-	DeliveriesURL string       `json:"deliveries_url"`
-	LastResponse  LastResponse `json:"last_response"`
+	Type          string     `json:"type"`
+	ID            int        `json:"id"`
+	Name          string     `json:"name"`
+	Active        bool       `json:"active"`
+	Events        []string   `json:"events"`
+	Config        HookConfig `json:"config"`
+	UpdatedAt     string     `json:"updated_at"`
+	CreatedAt     string     `json:"created_at"`
+	URL           string     `json:"url"`
+	TestURL       string     `json:"test_url"`
+	PingURL       string     `json:"ping_url"`
+	DeliveriesURL string     `json:"deliveries_url"`
 }
 
 type HookConfig struct {
@@ -61,12 +61,6 @@ type HookConfig struct {
 	InsecureSSL string `json:"insecure_ssl"`
 	Secret      string `json:"secret"`
 	URL         string `json:"url"`
-}
-
-type LastResponse struct {
-	Code    interface{} `json:"code"`
-	Status  string      `json:"status"`
-	Message interface{} `json:"message"`
 }
 
 func getPayload(event LambdaEvent) ([]byte, error) {
@@ -113,6 +107,18 @@ func getSecret(ctx context.Context) (string, error) {
 	return secret, nil
 }
 
+func decodePayload(bp []byte) (*WebhookEvent, error) {
+	p := strings.TrimPrefix(string(bp), "payload=")
+	decoded, err := url.QueryUnescape(p)
+	if err != nil {
+		log.Println(err)
+		return nil, fmt.Errorf("error decoding payload: %s", err)
+	}
+	var w WebhookEvent
+	json.Unmarshal([]byte(decoded), &w)
+	return &w, nil
+}
+
 func HandleRequest(ctx context.Context, event LambdaEvent) (string, error) {
 	secret, err := getSecret(ctx)
 	if err != nil {
@@ -131,10 +137,9 @@ func HandleRequest(ctx context.Context, event LambdaEvent) (string, error) {
 	if !valid {
 		return "", fmt.Errorf("invalid signature")
 	}
-	var eventBody WebhookEvent
-	json.Unmarshal(payload, &eventBody)
-	if eventBody.Zen != "Responsive is better than fast." {
-		log.Print(eventBody)
+	wh, err := decodePayload(payload)
+	if err != nil || wh == nil {
+		log.Print(err)
 		return "", fmt.Errorf("invalid payload")
 	}
 	return "success", nil

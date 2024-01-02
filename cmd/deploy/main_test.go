@@ -55,3 +55,14 @@ func TestGetPayloadBase64(t *testing.T) {
 		t.Errorf("unexpected payload: %s", payload)
 	}
 }
+
+func TestDecodePayload(t *testing.T) {
+	p := "payload=%7B%22zen%22%3A%22Something%22%2C%22hook_id%22%3A123%7D"
+	payload, err := decodePayload([]byte(p))
+	if err != nil {
+		t.Errorf("unexpected error: %s", err)
+	}
+	if payload.Zen != "Something" || payload.HookID != 123 {
+		t.Errorf("unexpected payload")
+	}
+}
