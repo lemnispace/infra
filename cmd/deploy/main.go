@@ -44,6 +44,8 @@ type LastResponse struct {
 }
 
 func HandleRequest(ctx context.Context, event interface{}) (string, error) {
+	log.Print("Received context: ", ctx)
+	log.Println("Received event: ", event)
 	err_msg := "Error retrieving secret for webhook validation"
 	ssmsvc, err := NewSSMClient(ctx)
 	if err != nil {
