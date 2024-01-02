@@ -54,7 +54,7 @@ resource "aws_iam_role_policy_attachment" "ssm_policy_attachment" {
   policy_arn = aws_iam_policy.lambda_ssm_access_policy.arn
 }
 
-resource "aws_iam_role_policy_attachment" "lambda_policy" {
+resource "aws_iam_role_policy_attachment" "webhook_lambda_policy" {
   role       = aws_iam_role.lemnispace_services_webhook_lambda_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
