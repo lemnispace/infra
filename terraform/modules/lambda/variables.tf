@@ -3,7 +3,7 @@ variable "services_s3_bucket_id" {
   type        = string
 }
 
-variable "execute_lambda_role_arn" {
-  description = "The ARN of the role that can execute Lambda functions"
+variable "lambda_role_arn" {
+  description = "The ARN of the role to use for the Lambda functions"
   type        = string
 }
