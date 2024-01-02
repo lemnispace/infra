@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  deployment:
 
 jobs:
   build:
@@ -53,7 +54,7 @@ jobs:
         run: terraform -chdir="./terraform" plan -no-color
 
       - name: Deploy
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' || github.event_name == 'deployment'
         id: deploy
         run: |
           terraform -chdir="./terraform" apply -auto-approve
