@@ -2,11 +2,36 @@ package main
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/aws/aws-lambda-go/lambda"
 )
+
+// LambdaEvent represents the structure of your Lambda event
+type LambdaEvent struct {
+	Body           string            `json:"body"`
+	Headers        Headers           `json:"headers"`
+}
+
+// Headers represents the specific structure of your headers
+type Headers struct {
+	Accept                    string `json:"accept"`
+	AcceptEncoding            string `json:"accept-encoding"`
+	ContentLength             string `json:"content-length"`
+	ContentType               string `json:"content-type"`
+	XGithubDelivery           string `json:"x-github-delivery"`
+	XGithubEvent              string `json:"x-github-event"`
+	XGithubHookID             string `json:"x-github-hook-id"`
+	XGithubHookInstallationID string `json:"x-github-hook-installation-target-id"`
+	XGithubHookType           string `json:"x-github-hook-installation-target-type"`
+	XHubSignature             string `json:"x-hub-signature"`
+	XHubSignature256          string `json:"x-hub-signature-256"`
+}
 
 type WebhookEvent struct {
 	Zen         string `json:"zen"`
@@ -43,19 +68,41 @@ type LastResponse struct {
 	Message interface{} `json:"message"`
 }
 
-func HandleRequest(ctx context.Context, event interface{}) (string, error) {
+func verifySignature(event LambdaEvent, secret string) (bool, error) {
+	signature := hmac.New(sha256.New, []byte(secret))
+	signature.Write([]byte(event.Body))
+	expectedMAC := signature.Sum(nil)
+
+	receivedMAC, err := hex.DecodeString(strings.TrimPrefix(event.Headers.XHubSignature256, "sha256="))
+	if err != nil {
+		log.Println(err)
+		return false, fmt.Errorf("error decoding received signature: %s", err)
+	}
+
+	return hmac.Equal(expectedMAC, receivedMAC), nil
+}
+
+func HandleRequest(ctx context.Context, event LambdaEvent) (string, error) {
 	log.Print("Received context: ", ctx)
 	log.Println("Received event: ", event)
-	err_msg := "Error retrieving secret for webhook validation"
+	errMsg := "Error retrieving secret for webhook validation"
 	ssmsvc, err := NewSSMClient(ctx)
 	if err != nil {
 		log.Println(err)
-		return "", fmt.Errorf(err_msg)
+		return "", fmt.Errorf(errMsg)
  }
-	_, err = ssmsvc.Param("/Any/infra/webhook-secret", true).GetValue(ctx)
+	secret, err := ssmsvc.Param("/Any/infra/webhook-secret", true).GetValue(ctx)
 	if err != nil {
 		 log.Println(err)
-		 return "", fmt.Errorf(err_msg)
+		 return "", fmt.Errorf(errMsg)
+	}
+	valid, err := verifySignature(event, secret)
+	if err != nil {
+		log.Println(err)
+		return "", fmt.Errorf("error verifying signature: %s", err)
+	}
+	if !valid {
+		return "", fmt.Errorf("invalid signature")
 	}
 	return "success", nil
 }
