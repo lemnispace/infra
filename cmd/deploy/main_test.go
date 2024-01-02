@@ -9,7 +9,7 @@ const PAYLOAD = "Hello, World!"
 
 func TestVerifySignature(t *testing.T) {
 	event := LambdaEvent{
-		Body: PAYLOAD,
+		Body: []byte(PAYLOAD),
 		Headers: Headers{
 			// https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries#testing-the-webhook-payload-validation
 			XHubSignature256: "sha256=757107ea0eb2509fc211221cce984b8a37570b6d7586c22c46f4379c8b043e17",

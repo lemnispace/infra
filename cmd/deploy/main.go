@@ -15,7 +15,7 @@ import (
 
 // LambdaEvent represents the structure of your Lambda event
 type LambdaEvent struct {
-	Body    string  `json:"body"`
+	Body    []byte  `json:"body"`
 	Headers Headers `json:"headers"`
 }
 
@@ -70,7 +70,7 @@ type LastResponse struct {
 }
 
 func verifySignature(event LambdaEvent, secret string) (bool, error) {
-	expectedMAC := calculateHash(secret, []byte(event.Body))
+	expectedMAC := calculateHash(secret, event.Body)
 	receivedMAC, err := hex.DecodeString(strings.TrimPrefix(event.Headers.XHubSignature256, "sha256="))
 	if err != nil {
 		log.Println(err)
@@ -107,7 +107,8 @@ func HandleRequest(ctx context.Context, event LambdaEvent) (string, error) {
 		return "", fmt.Errorf("invalid signature")
 	}
 	var eventBody WebhookEvent
-	json.Unmarshal([]byte(event.Body), &eventBody)
+	json.Unmarshal(event.Body, &eventBody)
+	log.Printf("Received Body: %s", event.Body)
 	log.Printf("Received Webhook Zen: %s", eventBody.Zen)
 	log.Printf("Received Webhook Name: %s", eventBody.Hook.Name)
 	log.Printf("Received Webhook Name: %s", eventBody.Hook.CreatedAt)
