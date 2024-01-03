@@ -23,6 +23,14 @@ resource "aws_lambda_function" "WebhookFunction" {
   source_code_hash = data.archive_file.WebhookFunction.output_base64sha256
   timeout          = 30
   memory_size      = 512
+
+  environment {
+    variables = {
+      DEPLOYMENT_REPO_OWNER = var.deployment_repo_owner
+      DEPLOYMENT_REPO_NAME  = var.deployment_repo_name
+      DEPLOYMENT_FILE_NAME  = var.deployment_file_name
+    }
+  }
 }
 
 resource "aws_lambda_function_url" "WebhookFunction_url" {

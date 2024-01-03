@@ -79,4 +79,7 @@ module "lemnispace_infra_lambda" {
   source                = "./modules/lambda"
   services_s3_bucket_id = module.lemnispace_services_s3.bucket_id
   lambda_role_arn       = module.lemnispace_roles.webhook_lambda_arn
+  deployment_repo_owner = var.deployment_repo_owner
+  deployment_repo_name  = var.deployment_repo_name
+  deployment_file_name  = var.deployment_file_name
 }
