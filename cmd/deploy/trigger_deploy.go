@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"time"
 
@@ -83,5 +84,6 @@ func TriggerDeploy(ctx context.Context, ssm *SSM) error {
 	if resp.StatusCode >= 400 {
 		return fmt.Errorf("recieved %d error response from github: %s", resp.StatusCode, body)
 	}
+	log.Println("Successfully triggered deploy. Github response: ", body)
 	return nil
 }
