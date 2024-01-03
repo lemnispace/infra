@@ -160,16 +160,12 @@ func HandleRequest(ctx context.Context, event LambdaEvent) (string, error) {
 	}
 	if wh.Hook.Events[0] == "deployment" {
 		log.Printf("Deployment webhook received from %s", wh.Repository.FullName)
-		// Use Go routine for asynchronous processing
-		go func() {
-			deployCtx := context.Background()
-			err := TriggerDeploy(deployCtx, ssm)
-			if err != nil {
-				log.Printf("Error in deployment: %v", err)
-			}
-		}()
+		err := TriggerDeploy(ctx, ssm)
+		if err != nil {
+			log.Printf("Error in deployment: %v", err)
+		}
 	}
-	return "success", nil
+	return "webhook received", nil
 }
 
 func main() {
