@@ -101,17 +101,18 @@ func calculateHash(secret string, payload []byte) []byte {
 	return signature.Sum(nil)
 }
 
-func getSecret(ctx context.Context) (string, error) {
-	errMsg := "Error retrieving secret for webhook validation"
-	ssmsvc, err := NewSSMClient(ctx)
+func getSSM(ctx context.Context) (*SSM, error) {
+	ssm, err := NewSSMClient(ctx)
 	if err != nil {
-		log.Println(err)
-		return "", fmt.Errorf(errMsg)
+		return nil, err
 	}
-	secret, err := ssmsvc.Param("/Any/infra/webhook-secret", true).GetValue(ctx)
+	return ssm, nil
+}
+
+func getSecret(ctx context.Context, ssm *SSM) (string, error) {
+	secret, err := ssm.Param("/Any/infra/webhook-secret", true).GetValue(ctx)
 	if err != nil {
-		log.Println(err)
-		return "", fmt.Errorf(errMsg)
+		return "", err
 	}
 	return secret, nil
 }
@@ -129,9 +130,15 @@ func decodePayload(bp []byte) (*WebhookEvent, error) {
 }
 
 func HandleRequest(ctx context.Context, event LambdaEvent) (string, error) {
-	secret, err := getSecret(ctx)
+	ssm, err := getSSM(ctx)
 	if err != nil {
-		return "", err
+		log.Println(err)
+		return "", fmt.Errorf("error getting SSM client")
+	}
+	secret, err := getSecret(ctx, ssm)
+	if err != nil {
+		log.Println(err)
+		return "", fmt.Errorf("error getting secret")
 	}
 	payload, err := getPayload(event)
 	if err != nil {
@@ -141,7 +148,7 @@ func HandleRequest(ctx context.Context, event LambdaEvent) (string, error) {
 	valid, err := verifySignature(event.Headers.XHubSignature256, payload, secret)
 	if err != nil {
 		log.Println(err)
-		return "", fmt.Errorf("error verifying signature: %s", err)
+		return "", fmt.Errorf("error verifying signature")
 	}
 	if !valid {
 		return "", fmt.Errorf("invalid signature")
@@ -153,6 +160,13 @@ func HandleRequest(ctx context.Context, event LambdaEvent) (string, error) {
 	}
 	if wh.Hook.Events[0] == "deployment" {
 		log.Printf("Deployment webhook received from %s", wh.Repository.FullName)
+		// Use Go routine for asynchronous processing
+		go func() {
+			err := TriggerDeploy(ctx, ssm)
+			if err != nil {
+				log.Printf("Error in deployment: %v", err)
+			}
+		}()
 	}
 	return "success", nil
 }
