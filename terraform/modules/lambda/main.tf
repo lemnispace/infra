@@ -16,13 +16,21 @@ resource "aws_s3_object" "webhook_deploy" {
 resource "aws_lambda_function" "WebhookFunction" {
   filename         = data.archive_file.WebhookFunction.output_path
   function_name    = "WebhookFunction"
-  role             = var.execute_lambda_role_arn
+  role             = var.lambda_role_arn
   handler          = "bootstrap"
   runtime          = "provided.al2023"
   architectures    = ["x86_64"]
   source_code_hash = data.archive_file.WebhookFunction.output_base64sha256
   timeout          = 30
   memory_size      = 512
+
+  environment {
+    variables = {
+      DEPLOYMENT_REPO_OWNER = var.deployment_repo_owner
+      DEPLOYMENT_REPO_NAME  = var.deployment_repo_name
+      DEPLOYMENT_FILE_NAME  = var.deployment_file_name
+    }
+  }
 }
 
 resource "aws_lambda_function_url" "WebhookFunction_url" {

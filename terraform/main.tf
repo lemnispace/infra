@@ -18,6 +18,8 @@ provider "aws" {
   region = var.aws_region
 }
 
+data "aws_caller_identity" "current" {}
+
 data "terraform_remote_state" "lemnispace_mosaic_service" {
   backend = "s3"
   config = {
@@ -64,7 +66,9 @@ module "lemnispace_api_prod_stage" {
 }
 
 module "lemnispace_roles" {
-  source = "./modules/roles"
+  source         = "./modules/roles"
+  aws_region     = var.aws_region
+  aws_account_id = data.aws_caller_identity.current.account_id
 }
 
 module "lemnispace_services_s3" {
@@ -72,7 +76,10 @@ module "lemnispace_services_s3" {
 }
 
 module "lemnispace_infra_lambda" {
-  source                  = "./modules/lambda"
-  services_s3_bucket_id   = module.lemnispace_services_s3.bucket_id
-  execute_lambda_role_arn = module.lemnispace_roles.execute_lambda_arn
+  source                = "./modules/lambda"
+  services_s3_bucket_id = module.lemnispace_services_s3.bucket_id
+  lambda_role_arn       = module.lemnispace_roles.webhook_lambda_arn
+  deployment_repo_owner = var.deployment_repo_owner
+  deployment_repo_name  = var.deployment_repo_name
+  deployment_file_name  = var.deployment_file_name
 }

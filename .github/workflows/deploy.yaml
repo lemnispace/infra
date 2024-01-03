@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -33,6 +34,9 @@ jobs:
       - name: Terraform CLI setup
         uses: hashicorp/setup-terraform@v3
 
+      - name: Test Go code
+        run: make test
+
       - name: Build and package
         run: |
           make build-deploy
@@ -50,7 +54,7 @@ jobs:
         run: terraform -chdir="./terraform" plan -no-color
 
       - name: Deploy
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         id: deploy
         run: |
           terraform -chdir="./terraform" apply -auto-approve
