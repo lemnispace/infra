@@ -22,20 +22,47 @@ type installationTokenResponse struct {
 	Token string `json:"token"`
 }
 
-// Function to get the installation access token using the JWT
-func getInstallationAccessToken(ctx context.Context, jwt string, installationId string) (string, error) {
-	url := fmt.Sprintf("https://api.github.com/app/installations/%s/access_tokens", installationId)
-	req, err := http.NewRequest("POST", url, nil)
+func makeRequest(ctx context.Context, jwt string, url string, method string) (*http.Response, error) {
+	req, err := http.NewRequest(method, url, nil)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-
 	// Setting the Authorization header with the JWT
 	req.Header.Set("Authorization", "Bearer "+jwt)
-	req.Header.Set("Accept", "application/vnd.github.v3+json")
 
 	client := &http.Client{}
-	resp, err := client.Do(req)
+	return client.Do(req)
+}
+
+// GetInstallationID makes an HTTP GET request to the specified endpoint to find the installation ID.
+func GetInstallationID(endpoint string) (string, error) {
+	resp, err := http.Get(endpoint)
+	if err != nil {
+		return "", fmt.Errorf("error getting installation IDs using endpoints: %v", endpoint)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("error reading response body: %v", err)
+	}
+	return string(body), nil
+}
+
+// Function to get the installation access token using the JWT
+func getInstallationAccessToken(ctx context.Context, jwt string, installationId string) (string, error) {
+	i, err := GetInstallationID("https://api.github.com/orgs/lemnispace/installation")
+	if err != nil {
+		log.Println(err)
+	}
+	log.Print(i)
+	i, err = GetInstallationID("https://api.github.com/app/installations")
+	if err != nil {
+		log.Println(err)
+	}
+	log.Print(i)
+	url := fmt.Sprintf("https://api.github.com/app/installations/%s/access_tokens", installationId)
+	resp, err := makeRequest(ctx, jwt, url, "POST")
 	if err != nil {
 		return "", err
 	}
