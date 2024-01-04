@@ -18,30 +18,17 @@ import (
 )
 
 /*
-Function to get the installation ID using the JWT
-
-The installation ID is required to get the installation access token
-*/
-func GetInstallationID(ctx context.Context, client *github.Client) (int64, error) {
-	// TODO: get org name from env
-	resp, _, err := client.Apps.ListInstallations(ctx, nil)
-	if err != nil {
-		return 0, err
-	}
-	return resp[0].GetID(), nil
-}
-
-/*
 Function to get the installation access token using the JWT
 
 learn more at https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation#generating-an-installation-access-token
 */
 func getInstallationAccessToken(ctx context.Context, jwt string) (string, error) {
 	client := github.NewClient(nil).WithAuthToken(jwt)
-	id, err := GetInstallationID(ctx, client)
+	installations, _, err := client.Apps.ListInstallations(ctx, nil)
 	if err != nil {
 		return "", fmt.Errorf("error getting installation ID: %v", err)
 	}
+	id := installations[0].GetID()
 	token, _, err := client.Apps.CreateInstallationToken(ctx, id, nil)
 	if err != nil {
 		return "", err
