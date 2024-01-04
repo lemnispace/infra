@@ -162,7 +162,8 @@ func HandleRequest(ctx context.Context, event LambdaEvent) (string, error) {
 		log.Printf("Deployment webhook received from %s", wh.Repository.FullName)
 		err := TriggerDeploy(ctx, ssm)
 		if err != nil {
-			log.Printf("Error in deployment: %v", err)
+			log.Println(err)
+			return "", fmt.Errorf("error processing deployment webhook")
 		}
 	}
 	return "webhook received", nil
