@@ -97,7 +97,7 @@ func getAppId(ctx context.Context, ssm *SSM) (string, error) {
 	return appId, nil
 }
 
-func getAuthToken(ctx context.Context, ssm *SSM) (string, error) {
+func getAuthToken(ctx context.Context, ssm *SSM, installId string) (string, error) {
 	pk, err := getPk(ctx, ssm)
 	if err != nil {
 		return "", fmt.Errorf("unable to get github app private key: %v", err)
@@ -110,7 +110,7 @@ func getAuthToken(ctx context.Context, ssm *SSM) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("unable to generate jwt: %v", err)
 	}
-	return getInstallationAccessToken(ctx, token, appId)
+	return getInstallationAccessToken(ctx, token, installId)
 }
 
 func getResponse(body io.ReadCloser) (string, error) {
@@ -122,8 +122,8 @@ func getResponse(body io.ReadCloser) (string, error) {
 	return string(b), nil
 }
 
-func TriggerDeploy(ctx context.Context, ssm *SSM) error {
-	token, err := getAuthToken(ctx, ssm)
+func TriggerDeploy(ctx context.Context, ssm *SSM, installId string) error {
+	token, err := getAuthToken(ctx, ssm, installId)
 	if err != nil {
 		return fmt.Errorf("unable to get github app token: %v", err)
 	}
