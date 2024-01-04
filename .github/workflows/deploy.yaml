@@ -55,5 +55,6 @@ jobs:
 
       - name: Deploy
         id: deploy
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         run: |
           terraform -chdir="./terraform" apply -auto-approve
