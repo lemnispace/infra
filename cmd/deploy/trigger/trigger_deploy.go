@@ -24,11 +24,11 @@ The installation ID is required to get the installation access token
 */
 func GetInstallationID(ctx context.Context, client *github.Client) (int64, error) {
 	// TODO: get org name from env
-	resp, _, err := client.Organizations.ListInstallations(ctx, "lemnispace", nil)
+	resp, _, err := client.Apps.ListInstallations(ctx, nil)
 	if err != nil {
 		return 0, err
 	}
-	return resp.Installations[0].GetID(), nil
+	return resp[0].GetID(), nil
 }
 
 /*
