@@ -30,11 +30,8 @@ func genJWT(appId string, pk *rsa.PrivateKey) (string, error) {
 	return jwtString, nil
 }
 
-func getPk(ctx context.Context, ssm *SSM) (*rsa.PrivateKey, error) {
-	pkPem, err := ssm.Param("/Any/infra/github-lemnispace-app-private-key", true).GetValue(ctx)
-	if err != nil {
-		return nil, err
-	}
+func decodePk(pkPem string) (*rsa.PrivateKey, error) {
+	log.Println(pkPem)
 	block, _ := pem.Decode([]byte(pkPem))
 	if block == nil {
 		return nil, errors.New("failed to decode PEM block containing private key")
@@ -45,6 +42,15 @@ func getPk(ctx context.Context, ssm *SSM) (*rsa.PrivateKey, error) {
 		return nil, err
 	}
 	return pk, nil
+}
+
+func getPk(ctx context.Context, ssm *SSM) (*rsa.PrivateKey, error) {
+	pkPem, err := ssm.Param("/Any/infra/github-lemnispace-app-private-key", true).GetValue(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return decodePk(pkPem)
+
 }
 
 func getAppId(ctx context.Context, ssm *SSM) (string, error) {
