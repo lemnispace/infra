@@ -4,17 +4,54 @@ import (
 	"context"
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/json"
 	"encoding/pem"
 	"errors"
 	"fmt"
 	"io"
 	"log"
+	"net/http"
 	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/google/go-github/v57/github"
 )
+
+type installationTokenResponse struct {
+	Token string `json:"token"`
+}
+
+// Function to get the installation access token using the JWT
+func getInstallationAccessToken(ctx context.Context, jwt string, installationId string) (string, error) {
+	url := fmt.Sprintf("https://api.github.com/app/installations/%s/access_tokens", installationId)
+	req, err := http.NewRequest("POST", url, nil)
+	if err != nil {
+		return "", err
+	}
+
+	// Setting the Authorization header with the JWT
+	req.Header.Set("Authorization", "Bearer "+jwt)
+	req.Header.Set("Accept", "application/vnd.github.v3+json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		return "", fmt.Errorf("failed to get installation access token, status code: %d", resp.StatusCode)
+	}
+
+	var tokenResp installationTokenResponse
+	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
+		return "", err
+	}
+
+	return tokenResp.Token, nil
+}
 
 func genJWT(appId string, pk *rsa.PrivateKey) (string, error) {
 	// https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-json-web-token-jwt-for-a-github-app#about-json-web-tokens-jwts
@@ -69,7 +106,11 @@ func getAuthToken(ctx context.Context, ssm *SSM) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("unable to get github app id: %v", err)
 	}
-	return genJWT(appId, pk)
+	token, err := genJWT(appId, pk)
+	if err != nil {
+		return "", fmt.Errorf("unable to generate jwt: %v", err)
+	}
+	return getInstallationAccessToken(ctx, token, appId)
 }
 
 func getResponse(body io.ReadCloser) (string, error) {
