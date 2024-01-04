@@ -22,6 +22,10 @@ type installationTokenResponse struct {
 	Token string `json:"token"`
 }
 
+type installationIDResponse struct {
+	ID int `json:"id"`
+}
+
 func makeRequest(ctx context.Context, jwt string, url string, method string) (*http.Response, error) {
 	req, err := http.NewRequest(method, url, nil)
 	if err != nil {
@@ -34,34 +38,36 @@ func makeRequest(ctx context.Context, jwt string, url string, method string) (*h
 	return client.Do(req)
 }
 
-// GetInstallationID makes an HTTP GET request to the specified endpoint to find the installation ID.
-func GetInstallationID(ctx context.Context, jwt string, endpoint string) (string, error) {
-	resp, err := makeRequest(ctx, jwt, endpoint, "GET")
+/*
+Function to get the installation ID using the JWT
+
+  - @param {string} jwt - The JWT generated for the GitHub App
+
+  - @returns {int} - The installation ID
+
+learn more at https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation#generating-an-installation-access-token
+*/
+func GetInstallationID(ctx context.Context, jwt string) (int, error) {
+	resp, err := makeRequest(ctx, jwt, "https://api.github.com/orgs/lemnispace/installation", "GET")
 	if err != nil {
-		return "", fmt.Errorf("error getting installation IDs using endpoints: %v", endpoint)
+		return 0, fmt.Errorf("error getting installation ID")
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("error reading response body: %v", err)
+	var idResp installationIDResponse
+	if err := json.NewDecoder(resp.Body).Decode(&idResp); err != nil {
+		return 0, err
 	}
-	return string(body), nil
+	return idResp.ID, nil
 }
 
 // Function to get the installation access token using the JWT
-func getInstallationAccessToken(ctx context.Context, jwt string, installationId string) (string, error) {
-	i, err := GetInstallationID(ctx, jwt, "https://api.github.com/orgs/lemnispace/installation")
+func getInstallationAccessToken(ctx context.Context, jwt string) (string, error) {
+	id, err := GetInstallationID(ctx, jwt)
 	if err != nil {
-		log.Println(err)
+		return "", err
 	}
-	log.Print(i)
-	i, err = GetInstallationID(ctx, jwt, "https://api.github.com/app/installations")
-	if err != nil {
-		log.Println(err)
-	}
-	log.Print(i)
-	url := fmt.Sprintf("https://api.github.com/app/installations/%s/access_tokens", installationId)
+	url := fmt.Sprintf("https://api.github.com/app/installations/%d/access_tokens", id)
 	resp, err := makeRequest(ctx, jwt, url, "POST")
 	if err != nil {
 		return "", err
@@ -124,7 +130,7 @@ func getAppId(ctx context.Context, ssm *SSM) (string, error) {
 	return appId, nil
 }
 
-func getAuthToken(ctx context.Context, ssm *SSM, installId string) (string, error) {
+func getAuthToken(ctx context.Context, ssm *SSM) (string, error) {
 	pk, err := getPk(ctx, ssm)
 	if err != nil {
 		return "", fmt.Errorf("unable to get github app private key: %v", err)
@@ -137,7 +143,7 @@ func getAuthToken(ctx context.Context, ssm *SSM, installId string) (string, erro
 	if err != nil {
 		return "", fmt.Errorf("unable to generate jwt: %v", err)
 	}
-	return getInstallationAccessToken(ctx, token, installId)
+	return getInstallationAccessToken(ctx, token)
 }
 
 func getResponse(body io.ReadCloser) (string, error) {
@@ -149,8 +155,8 @@ func getResponse(body io.ReadCloser) (string, error) {
 	return string(b), nil
 }
 
-func TriggerDeploy(ctx context.Context, ssm *SSM, installId string) error {
-	token, err := getAuthToken(ctx, ssm, installId)
+func TriggerDeploy(ctx context.Context, ssm *SSM) error {
+	token, err := getAuthToken(ctx, ssm)
 	if err != nil {
 		return fmt.Errorf("unable to get github app token: %v", err)
 	}
