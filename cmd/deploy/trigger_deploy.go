@@ -2,6 +2,9 @@ package main
 
 import (
 	"context"
+	"crypto/rsa"
+	"encoding/pem"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -12,7 +15,7 @@ import (
 	"github.com/google/go-github/v57/github"
 )
 
-func genJWT(appId string, pk []byte) (string, error) {
+func genJWT(appId string, pk *rsa.PrivateKey) (string, error) {
 	// https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-json-web-token-jwt-for-a-github-app#about-json-web-tokens-jwts
 	payload := jwt.MapClaims{
 		"iat": time.Now().Unix(),
@@ -27,12 +30,21 @@ func genJWT(appId string, pk []byte) (string, error) {
 	return jwtString, nil
 }
 
-func getPk(ctx context.Context, ssm *SSM) ([]byte, error) {
-	pk, err := ssm.Param("/Any/infra/github-lemnispace-app-private-key", true).GetValue(ctx)
+func getPk(ctx context.Context, ssm *SSM) (*rsa.PrivateKey, error) {
+	pkPem, err := ssm.Param("/Any/infra/github-lemnispace-app-private-key", true).GetValue(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return []byte(pk), nil
+	block, _ := pem.Decode([]byte(pkPem))
+	if block == nil {
+		return nil, errors.New("failed to decode PEM block containing private key")
+	}
+
+	pk, err := jwt.ParseRSAPrivateKeyFromPEM(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+	return pk, nil
 }
 
 func getAppId(ctx context.Context, ssm *SSM) (string, error) {
@@ -52,15 +64,15 @@ func getAuthToken(ctx context.Context, ssm *SSM) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("unable to get github app id: %v", err)
 	}
-	return genJWT(appId, []byte(pk))
+	return genJWT(appId, pk)
 }
 
 func getResponse(body io.ReadCloser) (string, error) {
 	b, err := io.ReadAll(body)
+	defer body.Close()
 	if err != nil {
 		return "", err
 	}
-	body.Close()
 	return string(b), nil
 }
 
