@@ -19,7 +19,7 @@ import (
 func genJWT(appId string, pk *rsa.PrivateKey) (string, error) {
 	// https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-json-web-token-jwt-for-a-github-app#about-json-web-tokens-jwts
 	payload := jwt.MapClaims{
-		"iat": time.Now().Unix(),
+		"iat": time.Now().Add(time.Second * -60).Unix(), // subtract 60 seconds to account for clock skew
 		"exp": time.Now().Add(time.Minute * 10).Unix(),
 		"iss": appId,
 	}
@@ -90,7 +90,7 @@ func TriggerDeploy(ctx context.Context, ssm *SSM) error {
 	repo := os.Getenv("DEPLOYMENT_REPO_NAME")
 	deployFile := os.Getenv("DEPLOYMENT_FILE_NAME")
 	client := github.NewClient(nil).WithAuthToken(token)
-	resp, err := client.Actions.CreateWorkflowDispatchEventByFileName(ctx, owner, repo, deployFile, github.CreateWorkflowDispatchEventRequest{})
+	resp, err := client.Actions.CreateWorkflowDispatchEventByFileName(ctx, owner, repo, deployFile, github.CreateWorkflowDispatchEventRequest{Ref: "main"})
 	if err != nil {
 		return fmt.Errorf("unable to trigger deploy: %v", err)
 	}
