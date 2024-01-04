@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/rsa"
+	"crypto/x509"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -31,13 +32,11 @@ func genJWT(appId string, pk *rsa.PrivateKey) (string, error) {
 }
 
 func decodePk(pkPem string) (*rsa.PrivateKey, error) {
-	log.Println(pkPem)
 	block, _ := pem.Decode([]byte(pkPem))
 	if block == nil {
-		return nil, errors.New("failed to decode PEM block containing private key")
+		return nil, errors.New("failed to parse PEM block containing the key")
 	}
-
-	pk, err := jwt.ParseRSAPrivateKeyFromPEM(block.Bytes)
+	pk, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
 		return nil, err
 	}
