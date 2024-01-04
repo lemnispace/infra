@@ -166,7 +166,7 @@ func HandleRequest(ctx context.Context, event LambdaEvent) (string, error) {
 			return "", fmt.Errorf("error processing deployment webhook")
 		}
 	}
-	return "webhook received", nil
+	return "webhook successfully processed", nil
 }
 
 func main() {

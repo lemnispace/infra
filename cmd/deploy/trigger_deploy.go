@@ -48,6 +48,7 @@ Function to get the installation ID using the JWT
 learn more at https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation#generating-an-installation-access-token
 */
 func GetInstallationID(ctx context.Context, jwt string) (int, error) {
+	// TODO: get org name from env
 	resp, err := makeRequest(ctx, jwt, "https://api.github.com/orgs/lemnispace/installation", "GET")
 	if err != nil {
 		return 0, fmt.Errorf("error getting installation ID")
@@ -114,6 +115,7 @@ func decodePk(pkPem string) (*rsa.PrivateKey, error) {
 }
 
 func getPk(ctx context.Context, ssm *SSM) (*rsa.PrivateKey, error) {
+	// TODO: get param name from env
 	pkPem, err := ssm.Param("/Any/infra/github-lemnispace-app-private-key", true).GetValue(ctx)
 	if err != nil {
 		return nil, err
@@ -123,6 +125,7 @@ func getPk(ctx context.Context, ssm *SSM) (*rsa.PrivateKey, error) {
 }
 
 func getAppId(ctx context.Context, ssm *SSM) (string, error) {
+	// TODO: get param name from env
 	appId, err := ssm.Param("/Any/infra/github-lemnispace-app-id", true).GetValue(ctx)
 	if err != nil {
 		return "", err
