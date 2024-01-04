@@ -35,8 +35,8 @@ func makeRequest(ctx context.Context, jwt string, url string, method string) (*h
 }
 
 // GetInstallationID makes an HTTP GET request to the specified endpoint to find the installation ID.
-func GetInstallationID(endpoint string) (string, error) {
-	resp, err := http.Get(endpoint)
+func GetInstallationID(ctx context.Context, jwt string, endpoint string) (string, error) {
+	resp, err := makeRequest(ctx, jwt, endpoint, "GET")
 	if err != nil {
 		return "", fmt.Errorf("error getting installation IDs using endpoints: %v", endpoint)
 	}
@@ -51,12 +51,12 @@ func GetInstallationID(endpoint string) (string, error) {
 
 // Function to get the installation access token using the JWT
 func getInstallationAccessToken(ctx context.Context, jwt string, installationId string) (string, error) {
-	i, err := GetInstallationID("https://api.github.com/orgs/lemnispace/installation")
+	i, err := GetInstallationID(ctx, jwt, "https://api.github.com/orgs/lemnispace/installation")
 	if err != nil {
 		log.Println(err)
 	}
 	log.Print(i)
-	i, err = GetInstallationID("https://api.github.com/app/installations")
+	i, err = GetInstallationID(ctx, jwt, "https://api.github.com/app/installations")
 	if err != nil {
 		log.Println(err)
 	}
