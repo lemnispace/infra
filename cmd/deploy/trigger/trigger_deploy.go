@@ -1,4 +1,4 @@
-package main
+package trigger
 
 import (
 	"context"
@@ -16,6 +16,7 @@ import (
 
 	"github.com/golang-jwt/jwt"
 	"github.com/google/go-github/v57/github"
+	s "github.com/lemnispace/infra/cmd/deploy/secret"
 )
 
 type installationTokenResponse struct {
@@ -114,7 +115,7 @@ func decodePk(pkPem string) (*rsa.PrivateKey, error) {
 	return pk, nil
 }
 
-func getPk(ctx context.Context, ssm *SSM) (*rsa.PrivateKey, error) {
+func getPk(ctx context.Context, ssm *s.SSM) (*rsa.PrivateKey, error) {
 	// TODO: get param name from env
 	pkPem, err := ssm.Param("/Any/infra/github-lemnispace-app-private-key", true).GetValue(ctx)
 	if err != nil {
@@ -124,7 +125,7 @@ func getPk(ctx context.Context, ssm *SSM) (*rsa.PrivateKey, error) {
 
 }
 
-func getAppId(ctx context.Context, ssm *SSM) (string, error) {
+func getAppId(ctx context.Context, ssm *s.SSM) (string, error) {
 	// TODO: get param name from env
 	appId, err := ssm.Param("/Any/infra/github-lemnispace-app-id", true).GetValue(ctx)
 	if err != nil {
@@ -133,7 +134,7 @@ func getAppId(ctx context.Context, ssm *SSM) (string, error) {
 	return appId, nil
 }
 
-func getAuthToken(ctx context.Context, ssm *SSM) (string, error) {
+func getAuthToken(ctx context.Context, ssm *s.SSM) (string, error) {
 	pk, err := getPk(ctx, ssm)
 	if err != nil {
 		return "", fmt.Errorf("unable to get github app private key: %v", err)
@@ -158,7 +159,7 @@ func getResponse(body io.ReadCloser) (string, error) {
 	return string(b), nil
 }
 
-func TriggerDeploy(ctx context.Context, ssm *SSM) error {
+func TriggerDeploy(ctx context.Context, ssm *s.SSM) error {
 	token, err := getAuthToken(ctx, ssm)
 	if err != nil {
 		return fmt.Errorf("unable to get github app token: %v", err)

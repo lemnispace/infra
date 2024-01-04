@@ -13,6 +13,8 @@ import (
 	"strings"
 
 	"github.com/aws/aws-lambda-go/lambda"
+	s "github.com/lemnispace/infra/cmd/deploy/secret"
+	t "github.com/lemnispace/infra/cmd/deploy/trigger"
 )
 
 type LambdaEvent struct {
@@ -101,15 +103,15 @@ func calculateHash(secret string, payload []byte) []byte {
 	return signature.Sum(nil)
 }
 
-func getSSM(ctx context.Context) (*SSM, error) {
-	ssm, err := NewSSMClient(ctx)
+func getSSM(ctx context.Context) (*s.SSM, error) {
+	ssm, err := s.NewSSMClient(ctx)
 	if err != nil {
 		return nil, err
 	}
 	return ssm, nil
 }
 
-func getSecret(ctx context.Context, ssm *SSM) (string, error) {
+func getSecret(ctx context.Context, ssm *s.SSM) (string, error) {
 	secret, err := ssm.Param("/Any/infra/webhook-secret", true).GetValue(ctx)
 	if err != nil {
 		return "", err
@@ -160,7 +162,7 @@ func HandleRequest(ctx context.Context, event LambdaEvent) (string, error) {
 	}
 	if wh.Hook.Events[0] == "deployment" {
 		log.Printf("Deployment webhook received from %s", wh.Repository.FullName)
-		err := TriggerDeploy(ctx, ssm)
+		err := t.TriggerDeploy(ctx, ssm)
 		if err != nil {
 			log.Println(err)
 			return "", fmt.Errorf("error processing deployment webhook")
