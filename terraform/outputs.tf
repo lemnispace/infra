@@ -39,19 +39,19 @@ output "execute_lambda_role_name" {
 
 ### S3 Bucket outputs ###
 output "services_s3_bucket_id" {
-  value = module.lemnispace_s3.services_bucket_id
+  value = module.lemnispace_services_s3.bucket_id
 }
 
 output "services_s3_bucket_arn" {
-  value = module.lemnispace_s3.services_bucket_arn
+  value = module.lemnispace_services_s3.bucket_arn
 }
 
 output "user_product_files_s3_bucket_id" {
-  value = module.lemnispace_s3.user_product_files_bucket_id
+  value = module.lemnispace_services_s3.user_product_files_bucket_id
 }
 
 output "user_product_files_s3_bucket_arn" {
-  value = module.lemnispace_s3.user_product_files_bucket_arn
+  value = module.lemnispace_services_s3.user_product_files_bucket_arn
 }
 
 ### Lambda Function outputs ###
