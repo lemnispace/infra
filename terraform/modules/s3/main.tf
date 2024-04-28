@@ -4,7 +4,7 @@ resource "random_pet" "lemnispace_services_bucket_name" {
   prefix = "lemnispace-services-bucket"
 }
 resource "random_pet" "lemnispace_user_product_files_bucket_name" {
-  length = 4
+  length = 2
   prefix = "lemnispace-user-product-files-bucket"
 }
 
