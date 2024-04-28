@@ -71,13 +71,13 @@ module "lemnispace_roles" {
   aws_account_id = data.aws_caller_identity.current.account_id
 }
 
-module "lemnispace_services_s3" {
+module "lemnispace_s3" {
   source = "./modules/s3"
 }
 
 module "lemnispace_infra_lambda" {
   source                = "./modules/lambda"
-  services_s3_bucket_id = module.lemnispace_services_s3.bucket_id
+  services_s3_bucket_id = module.lemnispace_s3.services_bucket_id
   lambda_role_arn       = module.lemnispace_roles.webhook_lambda_arn
   deployment_repo_owner = var.deployment_repo_owner
   deployment_repo_name  = var.deployment_repo_name
